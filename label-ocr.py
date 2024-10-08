@@ -143,9 +143,13 @@ while True:
                 cv2.putText(frame, f"Surface: {int(area)}", (x, y - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 cv2.putText(frame, f"Ratio: {round(aspect_ratio, 2)}", (x, y - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
+    # Réduire la taille de la fenêtre vidéo à 50% de l'original
+    small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+    small_thresh = cv2.resize(thresh, (0, 0), fx=0.5, fy=0.5)
+
     # Afficher la vidéo avec les étiquettes et les codes-barres détectés
-    cv2.imshow('Detection d\'etiquettes et codes-barres', frame)
-    cv2.imshow('Threshold Filter', thresh)
+    cv2.imshow('Detection d\'etiquettes et codes-barres', small_frame)
+    cv2.imshow('Threshold Filter', small_thresh)
 
     # Ajuster le contraste en appuyant sur les touches 'up' et 'down'
     key = cv2.waitKey(1) & 0xFF
