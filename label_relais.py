@@ -2,13 +2,11 @@
 import cv2
 import numpy as np
 import time
-import RPi.GPIO as GPIO
+from gpiozero import OutputDevice
 
-# Configuration des GPIO
-GPIO.setmode(GPIO.BCM)
+# Configuration des GPIO avec gpiozero
 RELAY_PIN = 24  # Numéro de la broche GPIO reliée au relais (GPIO 24 = Pin 18)
-GPIO.setup(RELAY_PIN, GPIO.OUT)
-GPIO.output(RELAY_PIN, GPIO.LOW)  # Relais éteint au départ
+relay = OutputDevice(RELAY_PIN, active_high=True, initial_value=False)  # Relais éteint au départ
 
 # Capture vidéo
 cap = cv2.VideoCapture(0)
@@ -19,11 +17,13 @@ new_frame_time = 0
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 middle_line_x = frame_width // 2
 
-transfert_delay = 3  # Délai en secondes avant d'activer le relais
+transfert_delay = 0  # Délai en secondes avant d'activer le relais
+relay_on_duration = 5  # Durée en secondes pendant laquelle le relais reste activé
 
 transfer_on_time = 0
 transfer_active = False
 relay_active = False  # Pour suivre l'état du relais
+relay_on_time = 0  # Temps auquel le relais a été activé
 
 while True:
     ret, frame = cap.read()
@@ -73,11 +73,12 @@ while True:
         cv2.putText(frame, "Transfert OK", (10, frame.shape[0] // 2), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
         if not relay_active:  # Si le relais n'est pas déjà activé
-            GPIO.output(RELAY_PIN, GPIO.HIGH)  # Allumer le relais
+            relay.on()  # Allumer le relais
             relay_active = True
+            relay_on_time = time.time()  # Enregistrer le temps d'activation du relais
     else:
-        if relay_active:  # Éteindre le relais si l'étiquette n'est plus présente
-            GPIO.output(RELAY_PIN, GPIO.LOW)
+        if relay_active and (time.time() - relay_on_time >= relay_on_duration):  # Éteindre le relais après la durée spécifiée
+            relay.off()
             relay_active = False
 
     fps_text = f"FPS: {int(fps)}"
@@ -91,6 +92,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
-# Nettoyage des GPIO à la fin
-GPIO.cleanup()
